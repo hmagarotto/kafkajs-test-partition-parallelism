@@ -1,0 +1,55 @@
+version: '2.1'
+services:
+  app:
+    build: .
+  kafka:
+    image: spotify/kafka
+    environment:
+      ADVERTISED_HOST: kafka
+      ADVERTISED_PORT: 9092
+  kafka-manager:
+    image: hlebalbau/kafka-manager:stable
+    command: -Dpidfile.path=/dev/null
+    ports:
+      - 9000:9000
+    environment:
+      ZK_HOSTS: kafka:2181
+      APPLICATION_SECRET: letmein
+    depends_on:
+      - kafka
+  kafka-manager-setup:
+    image: curlimages/curl
+    command: >-
+      -sv -XPOST
+      http://kafka-manager:9000/clusters
+      --retry-connrefused
+      --retry-delay 2
+      --retry 15
+      -d "name=local"
+      -d "zkHosts=kafka%3A2181"
+      -d "kafkaVersion=0.10.1.0"
+      -d "pollConsumers=true"
+      -d "tuning.brokerViewUpdatePeriodSeconds=30"
+      -d "tuning.clusterManagerThreadPoolSize=2"
+      -d "tuning.clusterManagerThreadPoolQueueSize=100"
+      -d "tuning.kafkaCommandThreadPoolSize=2"
+      -d "tuning.kafkaCommandThreadPoolQueueSize=100"
+      -d "tuning.logkafkaCommandThreadPoolSize=2"
+      -d "tuning.logkafkaCommandThreadPoolQueueSize=100"
+      -d "tuning.logkafkaUpdatePeriodSeconds=30"
+      -d "tuning.partitionOffsetCacheTimeoutSecs=5"
+      -d "tuning.brokerViewThreadPoolSize=16"
+      -d "tuning.brokerViewThreadPoolQueueSize=1000"
+      -d "tuning.offsetCacheThreadPoolSize=16"
+      -d "tuning.offsetCacheThreadPoolQueueSize=1000"
+      -d "tuning.kafkaAdminClientThreadPoolSize=16"
+      -d "tuning.kafkaAdminClientThreadPoolQueueSize=1000"
+      -d "tuning.kafkaManagedOffsetMetadataCheckMillis=30000"
+      -d "tuning.kafkaManagedOffsetGroupCacheSize=1000000"
+      -d "tuning.kafkaManagedOffsetGroupExpireDays=7"
+      -d "securityProtocol=PLAINTEXT"
+      -d "saslMechanism=DEFAULT"
+      -d "jaasConfig="
+    depends_on:
+      - kafka
+      - kafka-manager
