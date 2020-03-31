@@ -24,7 +24,7 @@ async function createTopic() {
 async function produce() {
   const producer = client.producer();
   await producer.connect();
-  for (let id = 0; id < 50000; id++) {
+  for (let id = 0; id < numPartitions*10; id++) {
     const message = { id };
     const messageStr = JSON.stringify(message);
     const partition = id % numPartitions;
@@ -37,6 +37,7 @@ async function produce() {
     });
   }
   await producer.disconnect();
+  setTimeout(produce, 1000);
 }
 
 async function consume() {
@@ -63,8 +64,8 @@ async function consume() {
 
 async function main() {
   await createTopic();
+  await consume();
   produce();
-  consume();
 }
 
 main();
